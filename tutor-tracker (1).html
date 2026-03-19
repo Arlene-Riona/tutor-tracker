@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tutor Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root{
+  --c1:#5A0E24; --c2:#76153C; --c3:#BF124D; --c4:#67B2D8;
+  --pu1:#6B21A8; --pu2:#9333EA; --pu3:#C084FC;
+  --c3g:rgba(191,18,77,.18); --c4g:rgba(103,178,216,.15);
+  --pug:rgba(192,132,252,.14);
+  --bg:#0c090f; --s1:#130e18; --s2:#1c1224; --s3:#271a32;
+  --bdr:rgba(255,255,255,.08); --bdr2:rgba(255,255,255,.17);
+  --tx:#fdf0ff; --mt:#e8b4d0; --ft:#c485aa;
+  --disp:'Playfair Display',serif; --body:'DM Sans',sans-serif;
+  --r:12px; --rs:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--body);background:var(--bg);color:var(--tx);min-height:100vh;}
+
+/* ── CONNECT ── */
+#connect{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem;background:radial-gradient(ellipse at 25% 35%, rgba(90,14,36,.55) 0%, transparent 55%), radial-gradient(ellipse at 75% 65%, rgba(107,33,168,.35) 0%, transparent 55%), radial-gradient(ellipse at 60% 20%, rgba(103,178,216,.07) 0%, transparent 45%), var(--bg);}
+.cbox{background:var(--s2);border:1px solid var(--bdr2);border-radius:20px;padding:2.4rem;max-width:400px;width:100%;box-shadow:0 40px 80px rgba(0,0,0,.6);}
+.cbox h1{font-family:var(--disp);font-size:26px;color:var(--tx);margin-bottom:.3rem;}
+.cbox .sub{font-size:14px;color:var(--mt);margin-bottom:2rem;line-height:1.65;}
+.fg{display:flex;flex-direction:column;gap:5px;margin-bottom:1rem;}
+.fg label{font-size:12px;font-weight:500;color:var(--mt);text-transform:uppercase;letter-spacing:.6px;}
+.fg input{background:var(--s3);border:1px solid var(--bdr2);color:var(--tx);font-family:var(--body);font-size:13px;padding:10px 13px;border-radius:var(--rs);outline:none;transition:border-color .15s;width:100%;}
+.fg input:focus{border-color:var(--c3);}
+.fg input::placeholder{color:var(--ft);}
+.fgrow{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.btn-conn{width:100%;background:var(--c3);color:#fff;border:none;border-radius:var(--rs);font-family:var(--body);font-size:14px;font-weight:500;padding:12px;cursor:pointer;margin-top:.5rem;transition:background .15s;}
+.btn-conn:hover{background:#a00f40;}
+.cerr{font-size:12px;color:#ff7a7a;margin-top:.5rem;display:none;}
+
+/* ── APP ── */
+#app{display:none;}
+.hdr{background:var(--s1);border-bottom:1px solid var(--bdr);height:54px;display:flex;align-items:center;padding:0 1.8rem;gap:1.4rem;position:sticky;top:0;z-index:50;}
+.logo{font-family:var(--disp);font-size:19px;color:var(--tx);flex-shrink:0;}
+.logo span{color:var(--c4);}
+.nav{display:flex;gap:2px;}
+.nb{background:none;border:none;color:var(--mt);font-family:var(--body);font-size:14px;padding:7px 14px;border-radius:99px;cursor:pointer;transition:all .15s;}
+.nb:hover{color:var(--tx);background:var(--s3);}
+.nb.on{color:var(--pu3);background:rgba(147,51,234,.18);}
+.hright{margin-left:auto;display:flex;align-items:center;gap:10px;}
+.slbl{font-size:13px;color:var(--ft);}
+.slbl.ok{color:#5ecb8a;} .slbl.er{color:#ff7a7a;}
+.bsync{background:var(--s3);border:1px solid var(--bdr2);color:var(--mt);font-family:var(--body);font-size:13px;padding:5px 13px;border-radius:99px;cursor:pointer;transition:all .15s;}
+.bsync:hover{color:var(--tx);border-color:var(--c4);}
+
+.main{max-width:1020px;margin:0 auto;padding:1.8rem 1.5rem;}
+.pg{display:none;} .pg.on{display:block;}
+
+/* ── LOG CARD ── */
+.log-card{background:var(--s2);border:1px solid var(--bdr2);border-radius:16px;padding:1.6rem 1.8rem 1.4rem;margin-bottom:1.4rem;position:relative;overflow:hidden;}
+.log-card::before{content:'';position:absolute;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle, rgba(107,33,168,.28) 0%, transparent 70%);top:-80px;right:-60px;pointer-events:none;}
+.log-card::after{content:'';position:absolute;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle, rgba(191,18,77,.12) 0%, transparent 70%);bottom:-50px;left:30%;pointer-events:none;}
+.log-card h2{font-family:var(--disp);font-size:21px;color:var(--tx);margin-bottom:.2rem;}
+.log-card .hint{font-size:13px;color:var(--mt);margin-bottom:1.3rem;}
+.lrow{display:flex;gap:9px;align-items:flex-end;flex-wrap:wrap;position:relative;z-index:1;}
+.lf{display:flex;flex-direction:column;gap:4px;}
+.lf label{font-size:12px;font-weight:500;color:var(--mt);text-transform:uppercase;letter-spacing:.5px;}
+.lf input,.lf select{background:var(--s3);border:1px solid var(--bdr2);color:var(--tx);font-family:var(--body);font-size:14px;padding:9px 12px;border-radius:var(--rs);outline:none;transition:border-color .15s;}
+.lf input:focus,.lf select:focus{border-color:var(--c4);}
+.lf select option{background:var(--s3);}
+.stepper{display:flex;align-items:center;}
+.stepper button{width:34px;height:40px;background:var(--s3);border:1px solid var(--bdr2);color:var(--tx);font-size:17px;cursor:pointer;transition:all .15s;}
+.stepper button:first-child{border-radius:var(--rs) 0 0 var(--rs);}
+.stepper button:last-child{border-radius:0 var(--rs) var(--rs) 0;}
+.stepper button:hover{border-color:var(--c4);color:var(--c4);}
+.stepper .sv{width:52px;height:40px;border-top:1px solid var(--bdr2);border-bottom:1px solid var(--bdr2);background:rgba(255,255,255,.04);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:500;color:var(--tx);}
+.att-tog{display:flex;gap:5px;}
+.atb{padding:9px 14px;border-radius:var(--rs);border:1px solid var(--bdr2);background:var(--s3);color:var(--mt);font-family:var(--body);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;}
+.atb.yes.on{border-color:#5ecb8a;background:rgba(94,203,138,.1);color:#5ecb8a;}
+.atb.no.on{border-color:#ff7a7a;background:rgba(255,122,122,.1);color:#ff7a7a;}
+.ep{display:flex;align-items:center;background:var(--pug);border:1px solid rgba(192,132,252,.3);border-radius:var(--rs);padding:9px 14px;gap:8px;white-space:nowrap;}
+.ep .el{font-size:12px;color:var(--mt);}
+.ep .ev{font-size:17px;font-weight:500;color:var(--pu3);}
+.btn-add{background:var(--c3);color:#fff;border:none;border-radius:var(--rs);font-family:var(--body);font-size:14px;font-weight:500;padding:9px 22px;cursor:pointer;height:40px;align-self:flex-end;transition:background .15s;}
+.btn-add:hover{background:#a00f40;}
+.btn-add:disabled{opacity:.4;cursor:not-allowed;}
+.wprow{margin-top:1.1rem;position:relative;z-index:1;}
+.wplabs{display:flex;justify-content:space-between;font-size:12px;color:var(--mt);margin-bottom:4px;}
+.wptrack{height:3px;background:var(--s3);border-radius:99px;overflow:hidden;}
+.wpfill{height:100%;background:var(--pu2);border-radius:99px;transition:width .35s;}
+.wpfill.ov{background:#ff7a7a;}
+.lmsg{font-size:13px;color:var(--mt);margin-top:.6rem;min-height:15px;}
+
+/* ── KPIs ── */
+.kgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.4rem;}
+.kpi{background:var(--s2);border:1px solid var(--bdr);border-radius:var(--r);padding:1rem 1.2rem;transition:border-color .2s;}
+.kpi:hover{border-color:var(--bdr2);}
+.kpi .kl{font-size:12px;font-weight:500;color:var(--mt);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+.kpi .kv{font-size:24px;font-weight:600;font-family:var(--disp);color:var(--tx);line-height:1;}
+.kpi .ks{font-size:13px;color:var(--ft);margin-top:4px;}
+.kpi.hi{border-color:rgba(147,51,234,.4);background:var(--pug);}
+.kpi.hi .kv{color:var(--pu3);}
+.kpi.bl{border-color:rgba(103,178,216,.3);background:var(--c4g);}
+.kpi.bl .kv{color:var(--c4);}
+
+/* ── CHARTS ── */
+.cgrid{display:grid;grid-template-columns:1.55fr 1fr;gap:12px;margin-bottom:12px;}
+.ccard{background:var(--s2);border:1px solid var(--bdr);border-radius:var(--r);padding:1.2rem;}
+.ccard h3{font-size:12px;font-weight:500;color:var(--mt);text-transform:uppercase;letter-spacing:.6px;margin-bottom:1rem;}
+.cw{position:relative;}
+.abar{background:rgba(191,18,77,.12);border:1px solid rgba(191,18,77,.3);border-radius:var(--rs);padding:.65rem 1rem;font-size:12px;color:#e8607a;margin-bottom:1rem;display:none;}
+
+/* ── PAY TILES ── */
+.ptgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:8px;}
+.ptile{border-radius:var(--rs);padding:.85rem 1rem;border:1px solid var(--bdr);position:relative;transition:transform .18s,box-shadow .18s;}
+.ptile:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(0,0,0,.4);}
+.ptile .dot{width:7px;height:7px;border-radius:50%;position:absolute;top:.85rem;right:.9rem;}
+.ptile .pm{font-size:13px;font-weight:500;margin-bottom:3px;}
+.ptile .pa{font-size:17px;font-weight:600;font-family:var(--disp);}
+.ptile .pb{font-size:12px;margin-top:3px;}
+.ptile.paid{background:rgba(94,203,138,.07);border-color:rgba(94,203,138,.25);}
+.ptile.paid .dot{background:#5ecb8a;}.ptile.paid .pm{color:#5ecb8a;}.ptile.paid .pa{color:#5ecb8a;}
+.ptile.partial{background:var(--pug);border-color:rgba(192,132,252,.3);}
+.ptile.partial .dot{background:var(--pu3);}.ptile.partial .pm{color:var(--pu3);}.ptile.partial .pa{color:var(--pu3);}
+.ptile.pending{background:var(--c3g);border-color:rgba(191,18,77,.28);}
+.ptile.pending .dot{background:var(--c3);}.ptile.pending .pm{color:#e8607a;}.ptile.pending .pa{color:#e8607a;}
+.legend{display:flex;gap:14px;margin-bottom:.9rem;flex-wrap:wrap;}
+.leg{display:flex;align-items:center;gap:5px;font-size:13px;color:var(--mt);}
+.leg .ld{width:7px;height:7px;border-radius:50%;}
+
+/* ── PAY FORM ── */
+.pform{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:.8rem;}
+.pf{display:flex;flex-direction:column;gap:4px;}
+.pf label{font-size:12px;font-weight:500;color:var(--mt);text-transform:uppercase;letter-spacing:.5px;}
+.pf input{background:var(--s3);border:1px solid var(--bdr2);color:var(--tx);font-family:var(--body);font-size:13px;padding:9px 12px;border-radius:var(--rs);outline:none;transition:border-color .15s;}
+.pf input:focus{border-color:var(--c3);}
+.btn-rec{background:var(--c2);color:#fff;border:none;border-radius:var(--rs);font-family:var(--body);font-size:13px;font-weight:500;padding:9px 18px;cursor:pointer;height:38px;align-self:flex-end;transition:background .15s;}
+.btn-rec:hover{background:var(--c1);}
+.pmsg{font-size:12px;min-height:16px;margin-top:.3rem;}
+
+/* ── CARD / TABLE ── */
+.card{background:var(--s2);border:1px solid var(--bdr);border-radius:var(--r);padding:1.2rem;}
+.card h3{font-size:12px;font-weight:500;color:var(--mt);text-transform:uppercase;letter-spacing:.6px;margin-bottom:.9rem;}
+.frow{display:flex;gap:7px;margin-bottom:.85rem;flex-wrap:wrap;}
+.frow select{background:var(--s2);border:1px solid var(--bdr2);color:var(--tx);font-family:var(--body);font-size:12px;padding:6px 11px;border-radius:99px;outline:none;cursor:pointer;}
+.frow select option{background:var(--s2);}
+.frow select:focus{border-color:var(--c3);}
+table{width:100%;border-collapse:collapse;font-size:14px;}
+th{text-align:left;padding:7px 10px;font-size:10px;color:var(--mt);font-weight:500;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--bdr);}
+td{padding:9px 10px;border-bottom:1px solid var(--bdr);color:var(--tx);}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--s3);}
+.batt{display:inline-block;font-size:12px;font-weight:500;padding:2px 8px;border-radius:99px;}
+.batt.y{background:rgba(94,203,138,.12);color:#5ecb8a;}
+.batt.n{background:var(--c3g);color:#e8607a;}
+.bdel{background:none;border:none;color:var(--ft);font-size:14px;cursor:pointer;padding:2px 5px;border-radius:4px;transition:color .15s;}
+.bdel:hover{color:#ff7a7a;}
+.empty{text-align:center;padding:2.5rem;color:var(--ft);font-size:14px;}
+
+/* ── SETTINGS ── */
+.swrap{max-width:440px;}
+.swrap h2{font-family:var(--disp);font-size:20px;color:var(--tx);margin-bottom:1.4rem;}
+.sg{margin-bottom:1.1rem;}
+.sg label{font-size:12px;font-weight:500;color:var(--mt);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;}
+.sg input{width:100%;background:var(--s3);border:1px solid var(--bdr2);color:var(--tx);font-family:var(--body);font-size:13px;padding:10px 12px;border-radius:var(--rs);outline:none;transition:border-color .15s;}
+.sg input:focus{border-color:var(--c3);}
+.sg .sh{font-size:13px;color:var(--ft);margin-top:3px;}
+.slabel{font-size:10px;font-weight:500;color:var(--mt);text-transform:uppercase;letter-spacing:.6px;margin-bottom:.8rem;display:block;}
+hr.dv{border:none;border-top:1px solid var(--bdr);margin:1.4rem 0;}
+
+@media(max-width:680px){
+  .kgrid{grid-template-columns:1fr 1fr;}
+  .cgrid{grid-template-columns:1fr;}
+  .hdr{padding:0 .9rem;}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ CONNECT SCREEN ═══ -->
+<div id="connect">
+<div class="cbox">
+  <h1>Tutor Tracker</h1>
+  <p class="sub">Paste your Google Apps Script URL and set your defaults. You only do this once.</p>
+
+  <div class="fg">
+    <label>Apps Script Web App URL</label>
+    <input type="text" id="cfg-url" placeholder="https://script.google.com/macros/s/.../exec">
+  </div>
+  <div class="fg">
+    <label>Subject</label>
+    <input type="text" id="cfg-subj" placeholder="e.g. Data Structures">
+  </div>
+  <div class="fgrow">
+    <div class="fg">
+      <label>Rate (QAR / hr)</label>
+      <input type="number" id="cfg-rate" value="40" min="1">
+    </div>
+    <div class="fg">
+      <label>Max hrs / week</label>
+      <input type="number" id="cfg-max" value="6" min="1">
+    </div>
+  </div>
+  <div class="fg">
+    <label>Semester tag</label>
+    <input type="text" id="cfg-sem" placeholder="e.g. Spring2025">
+  </div>
+
+  <button class="btn-conn" onclick="saveConfig()">Connect →</button>
+  <p class="cerr" id="cerr">Please fill in all fields.</p>
+</div>
+</div>
+
+<!-- ═══ APP ═══ -->
+<div id="app">
+  <div class="hdr">
+    <div class="logo">tutor<span>.</span>track</div>
+    <div class="nav">
+      <button class="nb on" onclick="goTo('overview',this)">Overview</button>
+      <button class="nb" onclick="goTo('log',this)">Log Session</button>
+      <button class="nb" onclick="goTo('payments',this)">Payments</button>
+      <button class="nb" onclick="goTo('history',this)">History</button>
+      <button class="nb" onclick="goTo('settings',this)">Settings</button>
+    </div>
+    <div class="hright">
+      <span class="slbl" id="slbl">● syncing</span>
+      <button class="bsync" onclick="syncAll()">↻ Sync</button>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- OVERVIEW -->
+    <div class="pg on" id="pg-overview">
+      <div class="abar" id="abar"></div>
+      <div class="kgrid">
+        <div class="kpi">
+          <div class="kl">This week</div>
+          <div class="kv" id="kw-h">—</div>
+          <div class="ks" id="kw-p">—</div>
+        </div>
+        <div class="kpi hi">
+          <div class="kl">This month</div>
+          <div class="kv" id="km-h">—</div>
+          <div class="ks" id="km-p">—</div>
+        </div>
+        <div class="kpi">
+          <div class="kl">Total earned</div>
+          <div class="kv" id="k-earn">—</div>
+          <div class="ks">all time</div>
+        </div>
+        <div class="kpi bl">
+          <div class="kl">Still owed</div>
+          <div class="kv" id="k-owed">—</div>
+          <div class="ks" id="k-owed-s">—</div>
+        </div>
+      </div>
+      <div class="cgrid">
+        <div class="ccard">
+          <h3>Weekly hours trend</h3>
+          <div class="cw" style="height:205px;"><canvas id="ch-wk"></canvas></div>
+        </div>
+        <div class="ccard">
+          <h3>Monthly earnings</h3>
+          <div class="cw" style="height:205px;"><canvas id="ch-mo"></canvas></div>
+        </div>
+      </div>
+      <div class="ccard">
+        <h3>Received vs still owed — by month</h3>
+        <div class="cw" style="height:150px;"><canvas id="ch-pay"></canvas></div>
+      </div>
+    </div>
+
+    <!-- LOG -->
+    <div class="pg" id="pg-log">
+      <div class="log-card">
+        <h2>Log a session</h2>
+        <p class="hint">Date and rate are pre-filled — just set hours and whether you both showed up</p>
+        <div class="lrow">
+          <div class="lf">
+            <label>Date</label>
+            <input type="date" id="l-date" style="width:145px;">
+          </div>
+          <div class="lf">
+            <label>Subject</label>
+            <input type="text" id="l-subj" style="width:160px;">
+          </div>
+          <div class="lf">
+            <label>Hours</label>
+            <div class="stepper">
+              <button onclick="dh(-0.5)">−</button>
+              <div class="sv" id="sv">1.0</div>
+              <button onclick="dh(0.5)">+</button>
+            </div>
+          </div>
+          <div class="lf">
+            <label>QAR / hr</label>
+            <input type="number" id="l-rate" style="width:75px;">
+          </div>
+          <div class="lf">
+            <label>Both showed up?</label>
+            <div class="att-tog">
+              <button class="atb yes on" onclick="sAtt('yes',this)">✓ Yes</button>
+              <button class="atb no" onclick="sAtt('no',this)">✗ No</button>
+            </div>
+          </div>
+          <div class="ep" style="align-self:flex-end;">
+            <div>
+              <div class="el">Session earns</div>
+              <div class="ev" id="epv">40 QAR</div>
+            </div>
+          </div>
+          <button class="btn-add" id="btn-add" onclick="logSess()" style="align-self:flex-end;">Add session</button>
+        </div>
+        <div class="wprow">
+          <div class="wplabs">
+            <span>This week: <strong id="wkused" style="color:var(--tx);">0 hrs</strong></span>
+            <span id="wkmax">max 6 hrs</span>
+          </div>
+          <div class="wptrack"><div class="wpfill" id="wpf" style="width:0%"></div></div>
+        </div>
+        <div class="lmsg" id="lmsg"></div>
+      </div>
+
+      <div class="card">
+        <h3>Recent sessions</h3>
+        <div id="recent"><div class="empty">No sessions yet</div></div>
+      </div>
+    </div>
+
+    <!-- PAYMENTS -->
+    <div class="pg" id="pg-payments">
+      <div class="card" style="margin-bottom:1.2rem;">
+        <h3>Record payment received</h3>
+        <div class="pform">
+          <div class="pf">
+            <label>Month</label>
+            <input type="month" id="p-mo" style="width:155px;">
+          </div>
+          <div class="pf">
+            <label>Amount (QAR)</label>
+            <input type="number" id="p-amt" placeholder="e.g. 480" style="width:130px;">
+          </div>
+          <div class="pf">
+            <label>Note (optional)</label>
+            <input type="text" id="p-note" placeholder="Partial, delayed, etc." style="width:190px;">
+          </div>
+          <button class="btn-rec" onclick="addPay()">Record</button>
+        </div>
+        <div class="pmsg" id="pmsg"></div>
+      </div>
+
+      <div class="legend">
+        <div class="leg"><div class="ld" style="background:#5ecb8a;"></div>Paid in full</div>
+        <div class="leg"><div class="ld" style="background:var(--c4);"></div>Partially paid</div>
+        <div class="leg"><div class="ld" style="background:var(--c3);"></div>Not received</div>
+      </div>
+      <div class="ptgrid" id="ptgrid"><div class="empty">No data yet</div></div>
+    </div>
+
+    <!-- HISTORY -->
+    <div class="pg" id="pg-history">
+      <div class="frow">
+        <select id="fmo" onchange="renderHist()"><option value="all">All months</option></select>
+        <select id="fatt" onchange="renderHist()">
+          <option value="all">All sessions</option>
+          <option value="yes">Attended</option>
+          <option value="no">Cancelled</option>
+        </select>
+      </div>
+      <div class="card">
+        <div id="htbl"><div class="empty">Loading…</div></div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="pg" id="pg-settings">
+      <div class="swrap">
+        <h2>Settings</h2>
+        <div class="sg">
+          <label>Apps Script URL</label>
+          <input type="text" id="s-url">
+          <div class="sh">Your Google Apps Script Web App deployment URL</div>
+        </div>
+        <div class="sg"><label>Default subject</label><input type="text" id="s-subj"></div>
+        <div class="sg"><label>Default rate (QAR / hr)</label><input type="number" id="s-rate"></div>
+        <div class="sg"><label>Max hours per week</label><input type="number" id="s-max"></div>
+        <div class="sg">
+          <label>Semester tag</label>
+          <input type="text" id="s-sem" placeholder="e.g. Spring2025">
+          <div class="sh">Change this each semester to tag new sessions.</div>
+        </div>
+        <button class="btn-conn" style="width:auto;padding:10px 24px;" onclick="saveSets()">Save settings</button>
+        <div class="pmsg" id="smsg" style="margin-top:.5rem;"></div>
+        <hr class="dv">
+        <button onclick="resetApp()" style="background:none;border:1px solid rgba(191,18,77,.5);color:#e8607a;font-family:var(--body);font-size:13px;padding:8px 16px;border-radius:var(--rs);cursor:pointer;">Reset &amp; reconnect</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+let CFG=null, sessions=[], payments=[];
+let curHrs=1.0, curAtt='yes';
+let cwk, cmo, cpay;
+
+// ── INIT ──
+window.onload = () => {
+  try { CFG = JSON.parse(localStorage.getItem('tt4') || 'null'); } catch(e) {}
+  if (!CFG) {
+    document.getElementById('connect').style.display = 'flex';
+  } else {
+    document.getElementById('connect').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    initApp(); syncAll();
+  }
+};
+
+function saveConfig() {
+  const url  = document.getElementById('cfg-url').value.trim();
+  const subj = document.getElementById('cfg-subj').value.trim();
+  const rate = parseFloat(document.getElementById('cfg-rate').value) || 40;
+  const max  = parseFloat(document.getElementById('cfg-max').value) || 6;
+  const sem  = document.getElementById('cfg-sem').value.trim();
+  if (!url || !subj || !sem) { document.getElementById('cerr').style.display = 'block'; return; }
+  CFG = { url, subj, rate, max, semester: sem };
+  localStorage.setItem('tt4', JSON.stringify(CFG));
+  document.getElementById('connect').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  initApp(); syncAll();
+}
+
+function initApp() {
+  document.getElementById('l-date').value = td();
+  document.getElementById('l-subj').value = CFG.subj || '';
+  document.getElementById('l-rate').value = CFG.rate || 40;
+  document.getElementById('p-mo').value   = td().slice(0, 7);
+  loadSetsUI(); updateEP(); updateWBar();
+}
+
+function loadSetsUI() {
+  document.getElementById('s-url').value  = CFG.url || '';
+  document.getElementById('s-subj').value = CFG.subj || '';
+  document.getElementById('s-rate').value = CFG.rate || 40;
+  document.getElementById('s-max').value  = CFG.max || 6;
+  document.getElementById('s-sem').value  = CFG.semester || '';
+}
+
+function saveSets() {
+  CFG.url      = document.getElementById('s-url').value.trim();
+  CFG.subj     = document.getElementById('s-subj').value.trim();
+  CFG.rate     = parseFloat(document.getElementById('s-rate').value) || 40;
+  CFG.max      = parseFloat(document.getElementById('s-max').value) || 6;
+  CFG.semester = document.getElementById('s-sem').value.trim();
+  localStorage.setItem('tt4', JSON.stringify(CFG));
+  cmsg('smsg', 'Saved!', '#5ecb8a');
+  initApp();
+}
+
+function resetApp() {
+  if (!confirm('Disconnect? Your Google Sheet data is untouched.')) return;
+  localStorage.removeItem('tt4'); location.reload();
+}
+
+// ── NAV ──
+function goTo(id, btn) {
+  document.querySelectorAll('.pg').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.nb').forEach(b => b.classList.remove('on'));
+  document.getElementById('pg-' + id).classList.add('on');
+  btn.classList.add('on');
+  if (id === 'overview') renderOverview();
+  if (id === 'payments') renderPayTiles();
+  if (id === 'history')  renderHist();
+  if (id === 'log')      { renderRecent(); updateWBar(); }
+}
+
+// ── SYNC ──
+function setSL(s, t) { const e = document.getElementById('slbl'); e.textContent = '● ' + t; e.className = 'slbl ' + s; }
+
+async function syncAll() {
+  setSL('', 'syncing…');
+  try {
+    const [s, p] = await Promise.all([fetchS(), fetchP()]);
+    sessions = s; payments = p;
+    setSL('ok', 'synced');
+    renderOverview(); updateWBar();
+  } catch(e) { setSL('er', 'offline'); }
+}
+
+async function fetchS() {
+  const r = await fetch(CFG.url); return await r.json();
+}
+async function fetchP() {
+  const r = await fetch(CFG.url, { method:'POST', body: JSON.stringify({ action:'getPayments' }) });
+  return await r.json();
+}
+async function api(pl) {
+  const r = await fetch(CFG.url, { method:'POST', body: JSON.stringify(pl) });
+  return r.json();
+}
+
+// ── HELPERS ──
+const td  = () => new Date().toISOString().slice(0, 10);
+const mk  = d  => String(d).slice(0, 7);
+const mLab = m => { const [y,mo] = m.split('-'); return new Date(y, mo-1).toLocaleString('default', {month:'short', year:'numeric'}); };
+
+function wStart(ds) { const d = new Date(ds); d.setDate(d.getDate() - d.getDay()); return d; }
+
+function cmsg(id, t, c) {
+  const e = document.getElementById(id);
+  if (!e) return;
+  e.textContent = t; e.style.color = c;
+  setTimeout(() => e.textContent = '', 3000);
+}
+
+function getWkHrs(ds) {
+  const ws = wStart(ds), we = new Date(ws); we.setDate(ws.getDate() + 6);
+  return sessions
+    .filter(s => s.attended === 'yes' && new Date(s.date) >= ws && new Date(s.date) <= we)
+    .reduce((a, s) => a + parseFloat(s.hours || 0), 0);
+}
+const getMoEarn = m => sessions.filter(s => mk(s.date) === m && s.attended === 'yes').reduce((a,s) => a + parseFloat(s.earned||0), 0);
+const getMoPaid = m => payments.filter(p => p.month === m).reduce((a,p) => a + parseFloat(p.amount||0), 0);
+
+// ── LOG ──
+function dh(d) {
+  curHrs = Math.max(0.5, Math.min(CFG.max || 6, curHrs + d));
+  document.getElementById('sv').textContent = curHrs.toFixed(1);
+  updateEP(); updateWBar();
+}
+
+function sAtt(v, btn) {
+  curAtt = v;
+  document.querySelectorAll('.atb').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  updateEP();
+}
+
+function updateEP() {
+  const rate = parseFloat(document.getElementById('l-rate')?.value) || CFG?.rate || 40;
+  const earn = curAtt === 'yes' ? curHrs * rate : 0;
+  const e = document.getElementById('epv');
+  if (e) e.textContent = earn.toFixed(0) + ' QAR';
+}
+
+function updateWBar() {
+  const dv  = document.getElementById('l-date')?.value || td();
+  const hrs = getWkHrs(dv);
+  const max = CFG?.max || 6;
+  const pct = Math.min(100, (hrs / max) * 100);
+  const f = document.getElementById('wpf');
+  if (f) { f.style.width = pct + '%'; f.className = 'wpfill' + (hrs >= max ? ' ov' : ''); }
+  const wu = document.getElementById('wkused'); if (wu) wu.textContent = hrs.toFixed(1) + ' hrs';
+  const wm = document.getElementById('wkmax');  if (wm) wm.textContent = 'max ' + (CFG?.max||6) + ' hrs';
+}
+
+async function logSess() {
+  const date = document.getElementById('l-date').value;
+  const subj = document.getElementById('l-subj').value.trim();
+  const rate = parseFloat(document.getElementById('l-rate').value) || CFG.rate;
+  if (!date || !subj) { cmsg('lmsg', 'Fill in date and subject.', '#ff7a7a'); return; }
+  const earned = curAtt === 'yes' ? +(curHrs * rate).toFixed(2) : 0;
+  const row = { id: Date.now(), date, subject: subj, hours: curHrs, rate, attended: curAtt, earned, semester: CFG.semester || '' };
+  const btn = document.getElementById('btn-add');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try {
+    await api({ action: 'add', row });
+    sessions.push(row);
+    cmsg('lmsg', curAtt === 'yes' ? '✓ Logged! +' + earned + ' QAR earned.' : '✓ Logged as cancelled — no pay.', '#5ecb8a');
+    document.getElementById('l-date').value = td();
+    updateWBar(); renderRecent(); renderOverview(); setSL('ok', 'synced');
+  } catch(e) {
+    cmsg('lmsg', '✗ Failed — check your connection.', '#ff7a7a');
+    setSL('er', 'error');
+  }
+  btn.disabled = false; btn.textContent = 'Add session';
+}
+
+function renderRecent() {
+  const last = [...sessions].sort((a,b) => b.date.localeCompare(a.date)).slice(0, 8);
+  if (!last.length) { document.getElementById('recent').innerHTML = '<div class="empty">No sessions yet</div>'; return; }
+  let h = '<table><thead><tr><th>Date</th><th>Subject</th><th>Hrs</th><th>Status</th><th>Earned</th></tr></thead><tbody>';
+  last.forEach(s => {
+    h += `<tr>
+      <td>${s.date}</td>
+      <td>${s.subject}</td>
+      <td>${parseFloat(s.hours||0).toFixed(1)}</td>
+      <td>${s.attended==='yes' ? '<span class="batt y">Attended</span>' : '<span class="batt n">Cancelled</span>'}</td>
+      <td style="font-weight:500;">${s.attended==='yes' ? parseFloat(s.earned||0).toFixed(0)+' QAR' : '—'}</td>
+    </tr>`;
+  });
+  document.getElementById('recent').innerHTML = h + '</tbody></table>';
+}
+
+// ── OVERVIEW ──
+function renderOverview() {
+  const now = new Date(), curMo = td().slice(0,7);
+  const ws = wStart(td()), we = new Date(ws); we.setDate(ws.getDate() + 6);
+
+  const wkS = sessions.filter(s => s.attended==='yes' && new Date(s.date)>=ws && new Date(s.date)<=we);
+  const wkH = wkS.reduce((a,s) => a + parseFloat(s.hours||0), 0);
+  const wkP = wkS.reduce((a,s) => a + parseFloat(s.earned||0), 0);
+
+  const moS = sessions.filter(s => mk(s.date)===curMo && s.attended==='yes');
+  const moH = moS.reduce((a,s) => a + parseFloat(s.hours||0), 0);
+  const moP = moS.reduce((a,s) => a + parseFloat(s.earned||0), 0);
+
+  const totE  = sessions.filter(s => s.attended==='yes').reduce((a,s) => a+parseFloat(s.earned||0), 0);
+  const totPd = payments.reduce((a,p) => a+parseFloat(p.amount||0), 0);
+  const owed  = Math.max(0, totE - totPd);
+
+  document.getElementById('kw-h').textContent = wkH.toFixed(1) + ' hrs';
+  document.getElementById('kw-p').textContent = wkP.toFixed(0) + ' QAR this week';
+  document.getElementById('km-h').textContent = moH.toFixed(1) + ' hrs';
+  document.getElementById('km-p').textContent = moP.toFixed(0) + ' QAR earned';
+  document.getElementById('k-earn').textContent = totE.toFixed(0) + ' QAR';
+  document.getElementById('k-owed').textContent = owed.toFixed(0) + ' QAR';
+
+  const allMo   = [...new Set(sessions.map(s => mk(s.date)))].sort();
+  const unpaid  = allMo.filter(m => getMoEarn(m) > 0 && getMoPaid(m) < getMoEarn(m));
+  document.getElementById('k-owed-s').textContent = unpaid.length ? unpaid.length + ' month(s) pending' : 'all settled ✓';
+
+  const overdue = unpaid.filter(m => {
+    const [y, mo] = m.split('-');
+    const diff = (now.getFullYear() - parseInt(y)) * 12 + (now.getMonth() - (parseInt(mo) - 1));
+    return diff >= 2;
+  });
+  const ab = document.getElementById('abar');
+  if (overdue.length) { ab.textContent = '⚠ Overdue (2+ months): ' + overdue.map(mLab).join(', '); ab.style.display = 'block'; }
+  else ab.style.display = 'none';
+
+  buildCharts(allMo);
+}
+
+function buildCharts(allMo) {
+  // weekly hours
+  const wmap = {};
+  sessions.filter(s => s.attended==='yes').forEach(s => {
+    const wk = wStart(s.date).toISOString().slice(0,10);
+    wmap[wk] = (wmap[wk]||0) + parseFloat(s.hours||0);
+  });
+  const wkeys = Object.keys(wmap).sort().slice(-12);
+  const wlabs = wkeys.map(k => { const d=new Date(k); return d.toLocaleString('default',{month:'short',day:'numeric'}); });
+
+  if (cwk) cwk.destroy();
+  cwk = new Chart(document.getElementById('ch-wk'), {
+    type: 'line',
+    data: { labels: wlabs, datasets: [
+      { label:'Hours', data: wkeys.map(k => +wmap[k].toFixed(2)), borderColor:'#9333EA', backgroundColor:'rgba(147,51,234,.1)', fill:true, tension:.35, pointRadius:4, pointBackgroundColor:'#9333EA', pointBorderColor:'#181013', pointBorderWidth:2 },
+      { label:'Max',   data: wkeys.map(() => CFG?.max||6), borderColor:'#67B2D8', borderDash:[5,4], pointRadius:0, borderWidth:1.5 }
+    ]},
+    options: { responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ labels:{ color:'#e8b4d0', font:{size:11}, boxWidth:10, boxHeight:10 } } },
+      scales:{
+        x:{ ticks:{ color:'#c485aa', font:{size:11}, autoSkip:true, maxRotation:30 }, grid:{ color:'rgba(255,255,255,.04)' } },
+        y:{ min:0, max:(CFG?.max||6)+2, ticks:{ color:'#c485aa', font:{size:11} }, grid:{ color:'rgba(255,255,255,.04)' } }
+      }
+    }
+  });
+
+  // monthly earned vs received
+  const months = allMo.slice(-8);
+  const mlabs  = months.map(mLab);
+  const earr   = months.map(getMoEarn);
+  const parr   = months.map(getMoPaid);
+
+  if (cmo) cmo.destroy();
+  cmo = new Chart(document.getElementById('ch-mo'), {
+    type: 'bar',
+    data: { labels: mlabs, datasets: [
+      { label:'Earned',   data: earr, backgroundColor:'#BF124D', borderRadius:5 },
+      { label:'Received', data: parr, backgroundColor:'#9333EA', borderRadius:5 }
+    ]},
+    options: { responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ labels:{ color:'#e8b4d0', font:{size:11}, boxWidth:10 } } },
+      scales:{
+        x:{ ticks:{ color:'#c485aa', font:{size:11}, autoSkip:true, maxRotation:45 }, grid:{ display:false } },
+        y:{ ticks:{ color:'#c485aa', font:{size:11}, callback: v => v+' Q' }, grid:{ color:'rgba(255,255,255,.04)' } }
+      }
+    }
+  });
+
+  // stacked received vs owed
+  if (cpay) cpay.destroy();
+  cpay = new Chart(document.getElementById('ch-pay'), {
+    type: 'bar',
+    data: { labels: mlabs, datasets: [
+      { label:'Received', data: parr, backgroundColor:'rgba(147,51,234,.65)', borderRadius:4 },
+      { label:'Owed',     data: months.map((m,i) => Math.max(0, earr[i]-parr[i])), backgroundColor:'rgba(191,18,77,.5)', borderRadius:4 }
+    ]},
+    options: { responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ labels:{ color:'#e8b4d0', font:{size:11}, boxWidth:10 } } },
+      scales:{
+        x:{ stacked:true, ticks:{ color:'#c485aa', font:{size:11}, autoSkip:true, maxRotation:45 }, grid:{ display:false } },
+        y:{ stacked:true, ticks:{ color:'#c485aa', font:{size:11}, callback: v => v+' Q' }, grid:{ color:'rgba(255,255,255,.04)' } }
+      }
+    }
+  });
+}
+
+// ── PAYMENTS ──
+async function addPay() {
+  const month  = document.getElementById('p-mo').value;
+  const amount = parseFloat(document.getElementById('p-amt').value);
+  const note   = document.getElementById('p-note').value.trim();
+  if (!month || !amount) { cmsg('pmsg', 'Enter month and amount.', '#ff7a7a'); return; }
+  const row = { id: Date.now(), month, amount, note, date: td() };
+  try {
+    await api({ action:'addPayment', row });
+    payments.push(row);
+    document.getElementById('p-amt').value  = '';
+    document.getElementById('p-note').value = '';
+    cmsg('pmsg', '✓ Payment recorded.', '#5ecb8a');
+    renderPayTiles(); renderOverview();
+  } catch(e) { cmsg('pmsg', '✗ Failed.', '#ff7a7a'); }
+}
+
+function renderPayTiles() {
+  const allMo = [...new Set([...sessions.map(s=>mk(s.date)), ...payments.map(p=>p.month)])].sort().reverse();
+  const mo = allMo.filter(m => getMoEarn(m) > 0);
+  if (!mo.length) { document.getElementById('ptgrid').innerHTML = '<div class="empty">No data yet</div>'; return; }
+  let h = '';
+  mo.forEach(m => {
+    const e = getMoEarn(m), p = getMoPaid(m), bal = e - p;
+    const cls    = bal <= 0 ? 'paid' : p > 0 ? 'partial' : 'pending';
+    const balTxt = bal <= 0 ? 'Fully paid' : bal.toFixed(0) + ' QAR owed';
+    const [y, mon] = m.split('-');
+    const lab = new Date(y, mon-1).toLocaleString('default', {month:'short', year:'numeric'});
+    h += `<div class="ptile ${cls}">
+      <div class="dot"></div>
+      <div class="pm">${lab}</div>
+      <div class="pa">${e.toFixed(0)} QAR</div>
+      <div class="pb">${balTxt}</div>
+    </div>`;
+  });
+  document.getElementById('ptgrid').innerHTML = h;
+}
+
+// ── HISTORY ──
+function renderHist() {
+  const fmo  = document.getElementById('fmo')?.value  || 'all';
+  const fatt = document.getElementById('fatt')?.value || 'all';
+  const sel  = document.getElementById('fmo');
+  if (sel) {
+    const months = [...new Set(sessions.map(s => mk(s.date)))].sort().reverse();
+    const cur = sel.value;
+    sel.innerHTML = '<option value="all">All months</option>';
+    months.forEach(m => { sel.innerHTML += `<option value="${m}"${cur===m?' selected':''}>${mLab(m)}</option>`; });
+  }
+  let f = [...sessions];
+  if (fmo  !== 'all') f = f.filter(s => mk(s.date) === fmo);
+  if (fatt !== 'all') f = f.filter(s => s.attended === fatt);
+  f.sort((a,b) => b.date.localeCompare(a.date));
+  if (!f.length) { document.getElementById('htbl').innerHTML = '<div class="empty">No sessions found</div>'; return; }
+  let h = '<table><thead><tr><th>Date</th><th>Subject</th><th>Hrs</th><th>Status</th><th>Earned</th><th></th></tr></thead><tbody>';
+  f.forEach(s => {
+    h += `<tr>
+      <td>${s.date}</td>
+      <td>${s.subject}</td>
+      <td>${parseFloat(s.hours||0).toFixed(1)}</td>
+      <td>${s.attended==='yes' ? '<span class="batt y">Attended</span>' : '<span class="batt n">Cancelled</span>'}</td>
+      <td style="font-weight:500;">${s.attended==='yes' ? parseFloat(s.earned||0).toFixed(0)+' QAR' : '—'}</td>
+      <td><button class="bdel" onclick="delS('${s.id}')">×</button></td>
+    </tr>`;
+  });
+  document.getElementById('htbl').innerHTML = h + '</tbody></table>';
+}
+
+async function delS(id) {
+  if (!confirm('Delete this session?')) return;
+  try {
+    await api({ action:'delete', id });
+    sessions = sessions.filter(s => String(s.id) !== String(id));
+    renderHist(); renderOverview();
+  } catch(e) { alert('Failed to delete.'); }
+}
+</script>
+</body>
+</html>
