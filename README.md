@@ -4,7 +4,12 @@ A lightweight, personal web app for tracking peer tutoring sessions, hours, earn
 
 No frameworks. No backend server. No subscriptions. Just open the file in a browser and go.
 
-![Dark theme dashboard with burgundy, crimson, and sky blue palette]()
+<img width="1882" height="867" alt="image" src="https://github.com/user-attachments/assets/b910c3f1-37bc-4233-9b6d-1001d47989d3" />
+
+
+
+<img width="1901" height="857" alt="image" src="https://github.com/user-attachments/assets/c67d4ef4-a6e6-412a-95ea-2650d1725fc9" />
+
 
 ---
 
