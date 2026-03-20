@@ -486,16 +486,27 @@ async function syncAll() {
   } catch(e) { setSL('er', 'offline'); }
 }
 
+function jsonp(url) {
+  return new Promise((resolve, reject) => {
+    const cb = 'cb_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+    const script = document.createElement('script');
+    const timer = setTimeout(() => { reject(new Error('timeout')); cleanup(); }, 10000);
+    function cleanup() { delete window[cb]; script.remove(); clearTimeout(timer); }
+    window[cb] = (data) => { resolve(data); cleanup(); };
+    script.onerror = () => { reject(new Error('JSONP failed')); cleanup(); };
+    script.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + cb;
+    document.head.appendChild(script);
+  });
+}
 async function fetchS() {
-  const r = await fetch(CFG.url); return await r.json();
+  return jsonp(CFG.url);
 }
 async function fetchP() {
-  const r = await fetch(CFG.url, { method:'POST', body: JSON.stringify({ action:'getPayments' }) });
-  return await r.json();
+  return jsonp(CFG.url + '?action=getPayments');
 }
 async function api(pl) {
-  const r = await fetch(CFG.url, { method:'POST', body: JSON.stringify(pl) });
-  return r.json();
+  const encoded = encodeURIComponent(JSON.stringify(pl));
+  return jsonp(CFG.url + '?payload=' + encoded);
 }
 
 // ── HELPERS ──
