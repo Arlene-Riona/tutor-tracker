@@ -68,54 +68,70 @@ In your sheet: **Extensions → Apps Script** → delete any existing code → p
 
 ```javascript
 function doGet(e) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName('Sheet1');
-  const data = sheet.getDataRange().getValues();
-  const headers = data[0];
-  const rows = data.slice(1).map(r => {
-    let obj = {};
-    headers.forEach((h,i) => obj[h] = r[i]);
-    return obj;
-  });
-  return ContentService
-    .createTextOutput(JSON.stringify(rows))
-    .setMimeType(ContentService.MimeType.JSON);
-}
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var callback = e.parameter.callback;
+  var action = e.parameter.action;
+  var payload = e.parameter.payload ? JSON.parse(e.parameter.payload) : null;
+  var result;
 
-function doPost(e) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName('Sheet1');
-  const payload = JSON.parse(e.postData.contents);
-  if (payload.action === 'add') {
-    const r = payload.row;
+  if (payload && payload.action === 'add') {
+    var sheet = ss.getSheetByName('Sheet1');
+    var r = payload.row;
     sheet.appendRow([r.id, r.date, r.subject, r.hours, r.rate, r.attended, r.earned, r.semester]);
+    result = {ok: true};
   }
-  if (payload.action === 'delete') {
-    const data = sheet.getDataRange().getValues();
-    for (let i = 1; i < data.length; i++) {
+  else if (payload && payload.action === 'delete') {
+    var sheet = ss.getSheetByName('Sheet1');
+    var data = sheet.getDataRange().getValues();
+    for (var i = 1; i < data.length; i++) {
       if (String(data[i][0]) === String(payload.id)) {
-        sheet.deleteRow(i + 1); break;
+        sheet.deleteRow(i + 1);
+        break;
       }
     }
+    result = {ok: true};
   }
-  if (payload.action === 'addPayment') {
-    let ps = ss.getSheetByName('Payments');
-    if (!ps) { ps = ss.insertSheet('Payments');
-      ps.appendRow(['id','month','amount','note','date']); }
-    const p = payload.row;
+  else if (payload && payload.action === 'addPayment') {
+    var ps = ss.getSheetByName('Payments');
+    if (!ps) {
+      ps = ss.insertSheet('Payments');
+      ps.appendRow(['id', 'month', 'amount', 'note', 'date']);
+    }
+    var p = payload.row;
     ps.appendRow([p.id, p.month, p.amount, p.note, p.date]);
+    result = {ok: true};
   }
-  if (payload.action === 'getPayments') {
-    const ps = ss.getSheetByName('Payments');
-    if (!ps) return ContentService.createTextOutput('[]')
-      .setMimeType(ContentService.MimeType.JSON);
-    const d = ps.getDataRange().getValues();
-    const h = d[0];
-    const rows = d.slice(1).map(r => { let o = {}; h.forEach((hh,i) => o[hh]=r[i]); return o; });
-    return ContentService.createTextOutput(JSON.stringify(rows))
-      .setMimeType(ContentService.MimeType.JSON);
+  else if (action === 'getPayments') {
+    var ps = ss.getSheetByName('Payments');
+    if (!ps) {
+      result = [];
+    } else {
+      var d = ps.getDataRange().getValues();
+      var h = d[0];
+      result = d.slice(1).map(function(r) {
+        var o = {};
+        h.forEach(function(hh, i) { o[hh] = r[i]; });
+        return o;
+      });
+    }
   }
-  return ContentService.createTextOutput(JSON.stringify({ok:true}))
+  else {
+    var sheet = ss.getSheetByName('Sheet1');
+    var data = sheet.getDataRange().getValues();
+    var headers = data[0];
+    result = data.slice(1).map(function(r) {
+      var obj = {};
+      headers.forEach(function(h, i) { obj[h] = r[i]; });
+      return obj;
+    });
+  }
+
+  var json = JSON.stringify(result);
+  if (callback) {
+    return ContentService.createTextOutput(callback + '(' + json + ')')
+      .setMimeType(ContentService.MimeType.JAVASCRIPT);
+  }
+  return ContentService.createTextOutput(json)
     .setMimeType(ContentService.MimeType.JSON);
 }
 ```
