@@ -530,7 +530,10 @@ function getWkHrs(ds) {
     .reduce((a, s) => a + parseFloat(s.hours || 0), 0);
 }
 const getMoEarn = m => sessions.filter(s => mk(s.date) === m && s.attended === 'yes').reduce((a,s) => a + parseFloat(s.earned||0), 0);
-const getMoPaid = m => payments.filter(p => p.month === m).reduce((a,p) => a + parseFloat(p.amount||0), 0);
+// 1. Updated Helper: Ensures month strings match perfectly
+const getMoPaid = m => payments
+  .filter(p => String(p.month).trim() === String(m).trim())
+  .reduce((a, p) => a + parseFloat(p.amount || 0), 0);
 
 // ── LOG ──
 function dh(d) {
@@ -709,41 +712,67 @@ function buildCharts(allMo) {
 }
 
 // ── PAYMENTS ──
+// 2. Updated Payment Recording: Matches the new Script action
 async function addPay() {
-  const month  = document.getElementById('p-mo').value;
-  const amount = parseFloat(document.getElementById('p-amt').value);
-  const note   = document.getElementById('p-note').value.trim();
-  if (!month || !amount) { cmsg('pmsg', 'Enter month and amount.', '#ff7a7a'); return; }
-  const row = { id: Date.now(), month, amount, note, date: td() };
+  const mo = document.getElementById('p-mo').value; // e.g. "2026-01"
+  const amt = parseFloat(document.getElementById('p-amt').value);
+  const note = document.getElementById('p-note').value.trim();
+
+  if (!mo || isNaN(amt)) { cmsg('pmsg', 'Enter month and amount.', '#ff7a7a'); return; }
+
+  const row = { id: Date.now(), month: mo, amount: amt, note: note };
+  
   try {
-    await api({ action:'addPayment', row });
+    // Note the action change to 'addPay' to match the Script update above
+    await api({ action: 'addPay', row });
     payments.push(row);
-    document.getElementById('p-amt').value  = '';
+    cmsg('pmsg', `✓ Recorded ${amt} QAR for ${mLab(mo)}`, '#5ecb8a');
+    
+    // Clear inputs
+    document.getElementById('p-amt').value = '';
     document.getElementById('p-note').value = '';
-    cmsg('pmsg', '✓ Payment recorded.', '#5ecb8a');
-    renderPayTiles(); renderOverview();
-  } catch(e) { cmsg('pmsg', '✗ Failed.', '#ff7a7a'); }
+    
+    renderPayTiles();
+    renderOverview();
+  } catch(e) {
+    cmsg('pmsg', '✗ Sync failed.', '#ff7a7a');
+  }
 }
 
+// 3. Updated Tile Renderer: Fixed the "Status" logic
 function renderPayTiles() {
-  const allMo = [...new Set([...sessions.map(s=>mk(s.date)), ...payments.map(p=>p.month)])].sort().reverse();
-  const mo = allMo.filter(m => getMoEarn(m) > 0);
-  if (!mo.length) { document.getElementById('ptgrid').innerHTML = '<div class="empty">No data yet</div>'; return; }
+  const allMo = [...new Set(sessions.map(s => mk(s.date)))].sort((a,b) => b.localeCompare(a));
+  const container = document.getElementById('ptgrid');
+  
+  if (!allMo.length) { 
+    container.innerHTML = '<div class="empty">No session data found.</div>'; 
+    return; 
+  }
+
   let h = '';
-  mo.forEach(m => {
-    const e = getMoEarn(m), p = getMoPaid(m), bal = e - p;
-    const cls    = bal <= 0 ? 'paid' : p > 0 ? 'partial' : 'pending';
-    const balTxt = bal <= 0 ? 'Fully paid' : bal.toFixed(0) + ' QAR owed';
-    const [y, mon] = m.split('-');
-    const lab = new Date(y, mon-1).toLocaleString('default', {month:'short', year:'numeric'});
-    h += `<div class="ptile ${cls}">
-      <div class="dot"></div>
-      <div class="pm">${lab}</div>
-      <div class="pa">${e.toFixed(0)} QAR</div>
-      <div class="pb">${balTxt}</div>
-    </div>`;
+  allMo.forEach(m => {
+    const earned = getMoEarn(m);
+    if (earned <= 0) return; // Don't show months where you didn't work
+
+    const paid = getMoPaid(m);
+    const owed = Math.max(0, earned - paid);
+    
+    let status = 'pending'; 
+    if (paid >= earned) {
+      status = 'paid'; // This makes it Green
+    } else if (paid > 0) {
+      status = 'partial'; // This makes it Blue/Purple
+    }
+
+    h += `
+      <div class="ptile ${status}">
+        <div class="dot"></div>
+        <div class="pm">${mLab(m)}</div>
+        <div class="pa">${earned.toFixed(0)} QAR</div>
+        <div class="pb">${owed > 0 ? owed.toFixed(0) + ' owed' : 'Paid Full'}</div>
+      </div>`;
   });
-  document.getElementById('ptgrid').innerHTML = h;
+  container.innerHTML = h;
 }
 
 // ── HISTORY ──
