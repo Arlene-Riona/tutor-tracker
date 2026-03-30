@@ -482,7 +482,8 @@ async function syncAll() {
     const [s, p] = await Promise.all([fetchS(), fetchP()]);
     sessions = s; payments = p;
     setSL('ok', 'synced');
-    renderOverview(); updateWBar();
+    // FIX: also re-render pay tiles on every sync so refresh reflects correct payment status
+    renderOverview(); updateWBar(); renderPayTiles();
   } catch(e) { setSL('er', 'offline'); }
 }
 
@@ -530,7 +531,11 @@ function getWkHrs(ds) {
     .reduce((a, s) => a + parseFloat(s.hours || 0), 0);
 }
 const getMoEarn = m => sessions.filter(s => mk(s.date) === m && s.attended === 'yes').reduce((a,s) => a + parseFloat(s.earned||0), 0);
-const getMoPaid = m => payments.filter(p => p.month === m).reduce((a,p) => a + parseFloat(p.amount||0), 0);
+
+// FIX: normalise month string on both sides to avoid Sheets format mismatches causing wrong payment status
+const getMoPaid = m => payments
+  .filter(p => String(p.month).trim().slice(0,7) === String(m).trim().slice(0,7))
+  .reduce((a,p) => a + parseFloat(p.amount||0), 0);
 
 // ── LOG ──
 function dh(d) {
