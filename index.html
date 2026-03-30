@@ -714,28 +714,37 @@ function buildCharts(allMo) {
 // ── PAYMENTS ──
 // 2. Updated Payment Recording: Matches the new Script action
 async function addPay() {
-  const mo = document.getElementById('p-mo').value; // e.g. "2026-01"
+  const mo = document.getElementById('p-mo').value; 
   const amt = parseFloat(document.getElementById('p-amt').value);
   const note = document.getElementById('p-note').value.trim();
+  const today = new Date().toISOString().split('T')[0]; // Matches your 'E' column
 
   if (!mo || isNaN(amt)) { cmsg('pmsg', 'Enter month and amount.', '#ff7a7a'); return; }
 
-  const row = { id: Date.now(), month: mo, amount: amt, note: note };
+  // The order of these keys must match your Spreadsheet columns A, B, C, D, E
+  const row = { 
+    id: Date.now(), 
+    month: mo, 
+    amount: amt, 
+    note: note,
+    date: today 
+  };
   
   try {
-    // Note the action change to 'addPay' to match the Script update above
-    await api({ action: 'addPay', row });
+    // This sends the data to your Code.gs
+    const response = await api({ action: 'addPay', row });
+    
+    if (response.error) {
+       throw new Error(response.error);
+    }
+
     payments.push(row);
-    cmsg('pmsg', `✓ Recorded ${amt} QAR for ${mLab(mo)}`, '#5ecb8a');
-    
-    // Clear inputs
-    document.getElementById('p-amt').value = '';
-    document.getElementById('p-note').value = '';
-    
+    cmsg('pmsg', `✓ Recorded ${amt} QAR`, '#5ecb8a');
     renderPayTiles();
     renderOverview();
   } catch(e) {
-    cmsg('pmsg', '✗ Sync failed.', '#ff7a7a');
+    console.error("Upload failed:", e);
+    cmsg('pmsg', '✗ Failed to save to Google Sheets.', '#ff7a7a');
   }
 }
 
