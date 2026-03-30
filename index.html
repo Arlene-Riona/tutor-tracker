@@ -504,9 +504,42 @@ async function fetchS() {
 async function fetchP() {
   return jsonp(CFG.url + '?action=getPayments');
 }
-async function api(pl) {
-  const encoded = encodeURIComponent(JSON.stringify(pl));
-  return jsonp(CFG.url + '?payload=' + encoded);
+function api(params) {
+  return new Promise((resolve, reject) => {
+    // Generate a unique callback name
+    const cbName = 'cb_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+    
+    // Define the callback globally so the Script can find it
+    window[cbName] = function(data) {
+      delete window[cbName]; // Clean up after use
+      document.body.removeChild(script);
+      if (data && data.error) {
+        reject(data.error);
+      } else {
+        resolve(data);
+      }
+    };
+
+    // Construct the URL with the callback parameter
+    const url = new URL(settings.scriptUrl);
+    Object.keys(params).forEach(key => {
+      if (key === 'row') {
+        url.searchParams.set('payload', encodeURIComponent(JSON.stringify({
+          action: params.action,
+          row: params.row
+        })));
+      } else {
+        url.searchParams.set(key, params[key]);
+      }
+    });
+    url.searchParams.set('callback', cbName);
+
+    // Create the script tag to trigger the request
+    const script = document.createElement('script');
+    script.src = url.toString();
+    script.onerror = () => reject("Network error or invalid Script URL");
+    document.body.appendChild(script);
+  });
 }
 
 // ── HELPERS ──
