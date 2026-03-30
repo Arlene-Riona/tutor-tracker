@@ -537,12 +537,15 @@ function getWkHrs(ds) {
 }
 const getMoEarn = m => sessions.filter(s => mk(s.date) === m && s.attended === 'yes').reduce((a,s) => a + parseFloat(s.earned||0), 0);
 
-// FIX: timezone-aware month normalization for both sessions and payments from Sheets
+// FIX: handle both plain "YYYY-MM" (local push) and full ISO timestamps (from Sheets) with timezone correction
 const getMoPaid = m => payments
   .filter(p => {
     const raw = String(p.month).trim();
+    // Already YYYY-MM — compare directly, no timezone correction needed
+    if (/^\d{4}-\d{2}$/.test(raw)) return raw === String(m).trim().slice(0, 7);
+    // Full ISO timestamp from Sheets — apply timezone offset correction
     const d = new Date(raw);
-    if (isNaN(d)) return raw.slice(0, 7) === String(m).trim().slice(0, 7);
+    if (isNaN(d)) return false;
     const local = new Date(d.getTime() + d.getTimezoneOffset() * 60000);
     return local.toISOString().slice(0, 7) === String(m).trim().slice(0, 7);
   })
