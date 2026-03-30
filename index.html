@@ -532,10 +532,14 @@ function getWkHrs(ds) {
 }
 const getMoEarn = m => sessions.filter(s => mk(s.date) === m && s.attended === 'yes').reduce((a,s) => a + parseFloat(s.earned||0), 0);
 
-// FIX: normalise month string on both sides to avoid Sheets format mismatches causing wrong payment status
+// FIX: Google Sheets returns month as full ISO timestamp e.g. "2025-12-31T21:00:00.000Z" — normalize before comparing
 const getMoPaid = m => payments
-  .filter(p => String(p.month).trim().slice(0,7) === String(m).trim().slice(0,7))
-  .reduce((a,p) => a + parseFloat(p.amount||0), 0);
+  .filter(p => {
+    const raw = String(p.month).trim();
+    const normalized = raw.length > 7 ? new Date(raw).toISOString().slice(0, 7) : raw.slice(0, 7);
+    return normalized === String(m).trim().slice(0, 7);
+  })
+  .reduce((a, p) => a + parseFloat(p.amount || 0), 0);
 
 // ── LOG ──
 function dh(d) {
